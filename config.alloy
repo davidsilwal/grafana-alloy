@@ -1,4 +1,7 @@
-
+ logging {
+        level  = "info"
+        format = "logfmt"
+      }
 
 otelcol.receiver.otlp "otlp_receiver" {
   grpc {
@@ -20,7 +23,7 @@ otelcol.exporter.prometheus "default" {
 }
 
 otelcol.exporter.loki "default" {
-  forward_to = [loki.write.default.receiver]
+  forward_to = [loki.process.local.receiver]
 }
 
 
@@ -30,6 +33,30 @@ loki.write "default" {
   }
 }
 
+loki.process "local" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.json {
+    expressions = {
+      attributes = "",
+    }
+  }
+
+  stage.json {
+    source      = "attributes"
+    expressions = {
+      ConnectionId = "",
+      Method       = "",
+    }
+  }
+
+  stage.labels {
+    values = {
+      connection_id = "ConnectionId",
+      method        = "Method",
+    }
+  }
+}
 
 otelcol.processor.batch "example" {
   output {
